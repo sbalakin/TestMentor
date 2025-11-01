@@ -6,6 +6,7 @@
     <title>Админ-панель - Система управления менторами</title>
     <link rel="stylesheet" href="/assets/styles/main.css">
     <link rel="stylesheet" href="/assets/styles/ui-kit.css">
+    <link rel="stylesheet" href="/core/shared/theme.css">
 </head>
 <body>
     <!-- Auth Check -->
@@ -157,6 +158,15 @@
             <p>&copy; 2024 KOI - Система управления менторами. Все права защищены.</p>
         </div>
     </footer>
+
+    <!-- Theme Script -->
+    <script src="/core/shared/theme.js"></script>
+    <script>
+        // Создать кнопку переключения темы
+        document.addEventListener('DOMContentLoaded', () => {
+            window.themeManager.createToggleButton();
+        });
+    </script>
 
     <!-- Scripts -->
     <script type="module">

@@ -1,0 +1,7 @@
+LDAP_HOST=ldap.effective-mobile.ru
+LDAP_PORT=636
+LDAP_BIND_DN=uid=api,ou=service-accounts,dc=company,dc=com
+LDAP_BIND_PASSWORD=XEXed3ZPf6rR
+LDAP_BASE_DN=dc=company,dc=com
+LDAP_CONNECTION_TIMEOUT=10000
+LDAP_USE_SSL=True

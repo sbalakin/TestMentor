@@ -6,6 +6,7 @@
     <title>Личный кабинет ментора - KOI</title>
     <link rel="stylesheet" href="/assets/styles/main.css">
     <link rel="stylesheet" href="/assets/styles/ui-kit.css">
+    <link rel="stylesheet" href="/core/shared/theme.css">
     <style>
         .mentor-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -221,6 +222,15 @@
             <p>&copy; 2024 KOI - Личный кабинет ментора</p>
         </div>
     </footer>
+
+    <!-- Theme Script -->
+    <script src="/core/shared/theme.js"></script>
+    <script>
+        // Создать кнопку переключения темы
+        document.addEventListener('DOMContentLoaded', () => {
+            window.themeManager.createToggleButton();
+        });
+    </script>
 
     <!-- Scripts -->
     <script type="module">

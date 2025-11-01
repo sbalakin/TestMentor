@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Настройки - Система управления менторами</title>
     <link rel="stylesheet" href="../../../../assets/styles/main.css">
+    <link rel="stylesheet" href="/core/shared/theme.css">
 </head>
 <body>
     <!-- Auth Check -->
@@ -314,6 +315,14 @@
                 }
             }
         }
+    </script>
+
+    <!-- Theme Script -->
+    <script src="/core/shared/theme.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            window.themeManager.createToggleButton();
+        });
     </script>
 </body>
 </html>

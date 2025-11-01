@@ -6,6 +6,7 @@
     <title>Мой профиль - Личный кабинет ментора</title>
     <link rel="stylesheet" href="/assets/styles/main.css">
     <link rel="stylesheet" href="/assets/styles/ui-kit.css">
+    <link rel="stylesheet" href="/core/shared/theme.css">
 </head>
 <body>
     <!-- Auth Check -->
@@ -173,6 +174,14 @@
         }
 
         document.addEventListener('DOMContentLoaded', loadProfile);
+    </script>
+
+    <!-- Theme Script -->
+    <script src="/core/shared/theme.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            window.themeManager.createToggleButton();
+        });
     </script>
 </body>
 </html>

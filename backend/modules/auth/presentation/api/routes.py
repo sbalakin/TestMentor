@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from core.database import get_db
 from modules.auth.application.dto.auth_dto import LoginRequest, LoginResponse, RegisterRequest
 from modules.auth.application.use_cases.login import LoginUseCase
+from modules.auth.application.use_cases.ldap_login import LdapLoginUseCase
 from modules.auth.infrastructure.repositories.user_repository import UserRepository
 from modules.auth.presentation.api.dependencies import get_current_user, get_current_manager
 from modules.auth.domain.entities.user import User
@@ -34,6 +35,36 @@ async def login(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Неверные учетные данные",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    return result
+
+
+@router.post("/ldap/login", response_model=LoginResponse)
+async def ldap_login(
+    request: LoginRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    LDAP логин пользователя через корпоративный LDAP сервер
+    
+    - **username**: Email пользователя из LDAP
+    - **password**: Пароль пользователя LDAP
+    
+    После успешной авторизации в LDAP:
+    - Создается локальный пользователь (если не существует)
+    - Возвращается JWT токен для доступа к API
+    """
+    use_case = LdapLoginUseCase(db)
+    
+    # Используем username как email для LDAP
+    result = use_case.execute(request.username, request.password)
+    
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Неверные учетные данные LDAP",
             headers={"WWW-Authenticate": "Bearer"},
         )
     

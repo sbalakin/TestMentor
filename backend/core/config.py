@@ -26,6 +26,15 @@ class Settings(BaseSettings):
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
     
+    # LDAP настройки
+    LDAP_HOST: str = "ldap.effective-mobile.ru"
+    LDAP_PORT: int = 636
+    LDAP_USE_SSL: bool = True
+    LDAP_BIND_DN: str = "uid=api,ou=service-accounts,dc=company,dc=com"
+    LDAP_BIND_PASSWORD: str = "XEXed3ZPf6rR"
+    LDAP_BASE_DN: str = "dc=company,dc=com"
+    LDAP_CONNECTION_TIMEOUT: int = 10000
+    
     class Config:
         env_file = ".env"
         case_sensitive = True
