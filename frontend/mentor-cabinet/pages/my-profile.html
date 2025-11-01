@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой профиль - Личный кабинет ментора</title>
+    <link rel="stylesheet" href="/assets/styles/main.css">
+    <link rel="stylesheet" href="/assets/styles/ui-kit.css">
+</head>
+<body>
+    <!-- Auth Check -->
+    <script type="module">
+        import authService from '/modules/auth/infrastructure/auth.service.js';
+        
+        if (!authService.isAuthenticated()) {
+            window.location.href = '/login.html';
+        } else if (!authService.isMentor()) {
+            window.location.href = '/admin-panel/index.html';
+        } else {
+            const user = authService.getCurrentUser();
+            const logoutBtn = document.createElement('button');
+            logoutBtn.textContent = `🚪 Выход (${user.username})`;
+            logoutBtn.className = 'logout-btn';
+            logoutBtn.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #e53e3e; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; z-index: 1000;';
+            
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('Вы уверены что хотите выйти?')) {
+                    import('/modules/auth/application/use-cases/logout.use-case.js').then(module => {
+                        new module.default().execute();
+                    });
+                }
+            });
+            
+            document.body.appendChild(logoutBtn);
+        }
+    </script>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">🐟 KOI - Мой профиль</h1>
+                <nav class="nav">
+                    <a href="/mentor-cabinet/index.html" class="nav-link">Главная</a>
+                    <a href="/mentor-cabinet/pages/my-works.html" class="nav-link">Мои записи</a>
+                    <a href="/mentor-cabinet/pages/add-work.html" class="nav-link">Добавить работу</a>
+                    <a href="/mentor-cabinet/pages/my-profile.html" class="nav-link active">Мой профиль</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+        <div class="container" style="max-width: 900px;">
+            <div class="page-header">
+                <h1>Мой профиль</h1>
+                <button class="btn-secondary" onclick="history.back()">← Назад</button>
+            </div>
+
+            <div id="profileContent">
+                <div class="loading" style="text-align: center; padding: 60px; color: #718096;">
+                    Загрузка профиля...
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 KOI - Личный кабинет ментора</p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import api from '/core/shared/api.js';
+        import authService from '/modules/auth/infrastructure/auth.service.js';
+        import formatters from '/core/shared/formatters.js';
+
+        const user = authService.getCurrentUser();
+
+        async function loadProfile() {
+            try {
+                const mentor = await api.get(`/mentors/${user.mentor_id}`);
+                const works = await api.get(`/work-records/?mentor_id=${user.mentor_id}`);
+                
+                const totalHours = works.reduce((sum, work) => sum + work.hours, 0);
+                const totalEarnings = totalHours * mentor.hourlyRate;
+
+                const initials = mentor.fullName.split(' ').map(n => n[0]).join('').substring(0, 2);
+                const statusClass = mentor.status === 'ACTIVE' ? 'active' : 'inactive';
+                const statusText = mentor.status === 'ACTIVE' ? 'Активен' : 'Неактивен';
+
+                document.getElementById('profileContent').innerHTML = `
+                    <!-- Stats -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
+                        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #667eea;">${works.length}</div>
+                            <div style="color: #718096; font-size: 14px;">Всего записей</div>
+                        </div>
+                        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #667eea;">${totalHours.toFixed(1)}</div>
+                            <div style="color: #718096; font-size: 14px;">Часов работы</div>
+                        </div>
+                        <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
+                            <div style="font-size: 32px; font-weight: bold; color: #667eea;">${formatters.money(totalEarnings)}</div>
+                            <div style="color: #718096; font-size: 14px;">Заработано</div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Header -->
+                    <div style="background: white; padding: 32px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 24px; display: flex; align-items: center; gap: 32px;">
+                        <div style="width: 120px; height: 120px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 48px; font-weight: bold;">
+                            ${initials}
+                        </div>
+                        <div style="flex: 1;">
+                            <h2 style="margin: 0 0 8px 0; font-size: 32px; color: #2d3748;">${mentor.fullName}</h2>
+                            <p style="margin: 0 0 16px 0; font-size: 18px; color: #718096;">${mentor.specialization}</p>
+                            <span style="display: inline-block; padding: 6px 16px; border-radius: 16px; font-size: 14px; font-weight: 600; background: ${statusClass === 'active' ? '#c6f6d5' : '#fed7d7'}; color: ${statusClass === 'active' ? '#22543d' : '#742a2a'};">
+                                ${statusText}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Contact Info -->
+                    <div style="background: white; padding: 32px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 24px;">
+                        <h3 style="margin: 0 0 24px 0; font-size: 20px; color: #2d3748;">Контактная информация</h3>
+                        <div style="display: grid; gap: 16px;">
+                            <div style="display: flex; padding: 16px 0; border-bottom: 1px solid #e2e8f0;">
+                                <div style="width: 200px; color: #718096; font-weight: 500;">Email:</div>
+                                <div style="flex: 1; color: #2d3748;"><a href="mailto:${mentor.email}" style="color: #667eea; text-decoration: none;">${mentor.email}</a></div>
+                            </div>
+                            <div style="display: flex; padding: 16px 0; border-bottom: 1px solid #e2e8f0;">
+                                <div style="width: 200px; color: #718096; font-weight: 500;">Телефон:</div>
+                                <div style="flex: 1; color: #2d3748;">${mentor.phone || 'Не указан'}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Work Info -->
+                    <div style="background: white; padding: 32px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <h3 style="margin: 0 0 24px 0; font-size: 20px; color: #2d3748;">Рабочая информация</h3>
+                        <div style="display: grid; gap: 16px;">
+                            <div style="display: flex; padding: 16px 0; border-bottom: 1px solid #e2e8f0;">
+                                <div style="width: 200px; color: #718096; font-weight: 500;">Ставка:</div>
+                                <div style="flex: 1; color: #2d3748; font-weight: 600;">${formatters.money(mentor.hourlyRate)}</div>
+                            </div>
+                            <div style="display: flex; padding: 16px 0; border-bottom: 1px solid #e2e8f0;">
+                                <div style="width: 200px; color: #718096; font-weight: 500;">Дата начала работы:</div>
+                                <div style="flex: 1; color: #2d3748;">${new Date(mentor.startDate).toLocaleDateString('ru-RU')}</div>
+                            </div>
+                            ${mentor.notes ? `
+                            <div style="display: flex; padding: 16px 0;">
+                                <div style="width: 200px; color: #718096; font-weight: 500;">Примечания:</div>
+                                <div style="flex: 1; color: #2d3748;">${mentor.notes}</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                document.getElementById('profileContent').innerHTML = `
+                    <div style="text-align: center; padding: 60px; background: white; border-radius: 16px;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">❌</div>
+                        <h3>Ошибка загрузки профиля</h3>
+                        <p style="color: #718096;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadProfile);
+    </script>
+</body>
+</html>
+

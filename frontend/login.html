@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход в систему - Koi</title>
+    <link rel="stylesheet" href="/assets/styles/main.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            max-width: 1000px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 600px;
+        }
+
+        .login-left {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 60px 40px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-logo {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .login-tagline {
+            font-size: 24px;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+
+        .login-features {
+            list-style: none;
+        }
+
+        .login-features li {
+            padding: 12px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 16px;
+        }
+
+        .login-features li:before {
+            content: "✓";
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .login-right {
+            padding: 60px 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-header {
+            margin-bottom: 40px;
+        }
+
+        .login-header h1 {
+            font-size: 32px;
+            color: #2d3748;
+            margin-bottom: 8px;
+        }
+
+        .login-header p {
+            color: #718096;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2d3748;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-input.error {
+            border-color: #e53e3e;
+        }
+
+        .error-message {
+            color: #e53e3e;
+            font-size: 14px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 8px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .login-footer {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .demo-accounts {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 24px;
+        }
+
+        .demo-accounts h3 {
+            font-size: 14px;
+            color: #2d3748;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .demo-account {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                grid-template-columns: 1fr;
+            }
+
+            .login-left {
+                display: none;
+            }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #718096;
+            margin-top: 16px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <!-- Left Panel -->
+        <div class="login-left">
+            <div class="login-logo">🐟 KOI</div>
+            <div class="login-tagline">Система управления менторами</div>
+            <ul class="login-features">
+                <li>Учет времени работы менторов</li>
+                <li>Генерация актов и отчетов</li>
+                <li>Статистика и аналитика</li>
+                <li>Удобное управление профилями</li>
+            </ul>
+        </div>
+
+        <!-- Right Panel - Login Form -->
+        <div class="login-right">
+            <div class="login-header">
+                <h1>Добро пожаловать!</h1>
+                <p>Войдите в свой аккаунт</p>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label" for="username">Логин</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        class="form-input" 
+                        placeholder="Введите логин"
+                        autocomplete="username"
+                        required
+                    >
+                    <div class="error-message" id="usernameError">Введите логин</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Пароль</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="form-input" 
+                        placeholder="Введите пароль"
+                        autocomplete="current-password"
+                        required
+                    >
+                    <div class="error-message" id="passwordError">Введите пароль</div>
+                </div>
+
+                <div class="error-message" id="loginError"></div>
+
+                <button type="submit" class="btn-login" id="loginBtn">
+                    Войти
+                </button>
+
+                <div class="loading" id="loading">
+                    Вход в систему...
+                </div>
+            </form>
+
+            <!-- Demo Accounts -->
+            <div class="demo-accounts">
+                <h3>Тестовые аккаунты:</h3>
+                <div class="demo-account">
+                    <span><strong>Руководитель:</strong> admin / admin123</span>
+                </div>
+                <div class="demo-account">
+                    <span><strong>Ментор:</strong> mentor1 / mentor1123</span>
+                </div>
+            </div>
+
+            <div class="login-footer">
+                © 2024 KOI. Все права защищены.
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import api from '/core/shared/api.js';
+        import authService from '/modules/auth/infrastructure/auth.service.js';
+
+        const form = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+        const loading = document.getElementById('loading');
+        const loginError = document.getElementById('loginError');
+
+        // Если уже авторизован - редирект
+        if (authService.isAuthenticated()) {
+            const user = authService.getCurrentUser();
+            redirectToApp(user.role);
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Очистить ошибки
+            document.querySelectorAll('.error-message').forEach(el => el.classList.remove('show'));
+            document.querySelectorAll('.form-input').forEach(el => el.classList.remove('error'));
+
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value;
+
+            // Валидация
+            let hasError = false;
+
+            if (!username) {
+                document.getElementById('usernameError').classList.add('show');
+                usernameInput.classList.add('error');
+                hasError = true;
+            }
+
+            if (!password) {
+                document.getElementById('passwordError').classList.add('show');
+                passwordInput.classList.add('error');
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            // Показать загрузку
+            loginBtn.disabled = true;
+            loading.classList.add('show');
+
+            try {
+                // Запрос на логин
+                const response = await api.post('/auth/login', { username, password });
+                
+                // Сохранить токен и пользователя
+                localStorage.setItem('auth_token', response.access_token);
+                localStorage.setItem('auth_user', JSON.stringify(response.user));
+
+                console.log('[Login] Успешный вход:', response.user);
+
+                // Редирект в зависимости от роли
+                redirectToApp(response.user.role);
+
+            } catch (error) {
+                console.error('[Login] Ошибка входа:', error);
+                
+                loginError.textContent = error.message || 'Неверный логин или пароль';
+                loginError.classList.add('show');
+                
+                loginBtn.disabled = false;
+                loading.classList.remove('show');
+            }
+        });
+
+        function redirectToApp(role) {
+            if (role === 'MANAGER') {
+                // Руководитель → Админ-панель
+                window.location.href = '/admin-panel/index.html';
+            } else if (role === 'MENTOR') {
+                // Ментор → Личный кабинет
+                window.location.href = '/mentor-cabinet/index.html';
+            }
+        }
+    </script>
+</body>
+</html>
+

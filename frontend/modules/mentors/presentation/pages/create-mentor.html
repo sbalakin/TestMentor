@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавить ментора - Система управления менторами</title>
+    <link rel="stylesheet" href="../../../../assets/styles/main.css">
+    <link rel="stylesheet" href="../styles/mentors.css">
+</head>
+<body>
+    <!-- Auth Check -->
+    <script type="module">
+        import authService from '/modules/auth/infrastructure/auth.service.js';
+        
+        // Проверка авторизации и прав
+        if (!authService.isAuthenticated()) {
+            window.location.href = '/modules/auth/presentation/pages/login.html';
+        } else if (!authService.isManager()) {
+            // Только руководитель может создавать менторов
+            alert('Доступ запрещен. Только руководитель может создавать менторов.');
+            window.location.href = '/index.html';
+        } else {
+            const user = authService.getCurrentUser();
+            const logoutBtn = document.createElement('button');
+            logoutBtn.textContent = `🚪 Выход (${user.username})`;
+            logoutBtn.className = 'logout-btn';
+            logoutBtn.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #e53e3e; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; z-index: 1000;';
+            
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('Вы уверены что хотите выйти?')) {
+                    import('/modules/auth/application/use-cases/logout.use-case.js').then(module => {
+                        new module.default().execute();
+                    });
+                }
+            });
+            
+            document.body.appendChild(logoutBtn);
+        }
+    </script>
+    
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">Система управления менторами</h1>
+                <nav class="nav">
+                    <a href="../../../../index.html" class="nav-link">Главная</a>
+                    <a href="../../presentation/pages/mentors-list.html" class="nav-link">Менторы</a>
+                    <a href="../../../work-records/presentation/pages/add-work.html" class="nav-link">Добавить работу</a>
+                    <a href="../../../work-records/presentation/pages/view-works.html" class="nav-link">Все записи</a>
+                    <a href="../../../reports/presentation/pages/reports-archive.html" class="nav-link">Архив актов</a>
+                    <a href="../../../settings/presentation/pages/settings.html" class="nav-link">Настройки</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+        <div class="container">
+            <!-- Breadcrumbs -->
+            <div class="breadcrumbs">
+                <a href="../../../../index.html">Главная</a>
+                <span>/</span>
+                <span>Добавить ментора</span>
+            </div>
+
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1>Добавить нового ментора</h1>
+                <button class="btn btn-secondary" onclick="history.back()">
+                    ← Назад
+                </button>
+            </div>
+
+            <!-- Form -->
+            <form id="createMentorForm" class="form">
+                <!-- Личная информация -->
+                <div class="form-section">
+                    <h2 class="form-section-title">Личная информация</h2>
+                    
+                    <div class="form-group">
+                        <label for="fullName" class="form-label">
+                            ФИО <span class="required">*</span>
+                        </label>
+                        <input 
+                            type="text" 
+                            id="fullName" 
+                            name="fullName"
+                            class="form-input" 
+                            placeholder="Иванов Иван Иванович"
+                            required
+                        >
+                        <div class="form-error" id="fullNameError"></div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email" class="form-label">
+                                Email <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="email" 
+                                id="email" 
+                                name="email"
+                                class="form-input" 
+                                placeholder="mentor@example.com"
+                                required
+                            >
+                            <div class="form-error" id="emailError"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone" class="form-label">
+                                Телефон
+                            </label>
+                            <input 
+                                type="tel" 
+                                id="phone" 
+                                name="phone"
+                                class="form-input" 
+                                placeholder="+7 (999) 999-99-99"
+                            >
+                            <div class="form-error" id="phoneError"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Профессиональная информация -->
+                <div class="form-section">
+                    <h2 class="form-section-title">Профессиональная информация</h2>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="specialization" class="form-label">
+                                Специализация <span class="required">*</span>
+                            </label>
+                            <select 
+                                id="specialization" 
+                                name="specialization"
+                                class="form-select"
+                                required
+                            >
+                                <option value="">Выберите специализацию</option>
+                                <option value="Обучение/Менторство">Обучение/Менторство</option>
+                                <option value="Разработка ботов">Разработка ботов</option>
+                                <option value="Веб-разработка">Веб-разработка</option>
+                                <option value="Дизайн">Дизайн</option>
+                                <option value="Консультации">Консультации</option>
+                                <option value="Другое">Другое</option>
+                            </select>
+                            <div class="form-error" id="specializationError"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="hourlyRate" class="form-label">
+                                Ставка за час (руб.) <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="number" 
+                                id="hourlyRate" 
+                                name="hourlyRate"
+                                class="form-input" 
+                                placeholder="1000"
+                                min="0"
+                                step="0.01"
+                                required
+                            >
+                            <div class="form-error" id="hourlyRateError"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="startDate" class="form-label">
+                                Дата начала сотрудничества <span class="required">*</span>
+                            </label>
+                            <input 
+                                type="date" 
+                                id="startDate" 
+                                name="startDate"
+                                class="form-input"
+                                required
+                            >
+                            <div class="form-error" id="startDateError"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">
+                                Статус <span class="required">*</span>
+                            </label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="status" value="active" checked>
+                                    <span>Активный</span>
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="status" value="inactive">
+                                    <span>Неактивный</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Документы и реквизиты -->
+                <div class="form-section">
+                    <h2 class="form-section-title">Документы и реквизиты</h2>
+                    
+                    <div class="form-group">
+                        <label for="passportOrInn" class="form-label">
+                            Паспортные данные / ИНН
+                        </label>
+                        <input 
+                            type="text" 
+                            id="passportOrInn" 
+                            name="passportOrInn"
+                            class="form-input" 
+                            placeholder="1234 567890"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bankDetails" class="form-label">
+                            Банковские реквизиты
+                        </label>
+                        <textarea 
+                            id="bankDetails" 
+                            name="bankDetails"
+                            class="form-textarea" 
+                            placeholder="Номер счета, БИК, название банка"
+                            rows="3"
+                        ></textarea>
+                    </div>
+                </div>
+
+                <!-- Дополнительная информация -->
+                <div class="form-section">
+                    <h2 class="form-section-title">Дополнительная информация</h2>
+                    
+                    <div class="form-group">
+                        <label for="notes" class="form-label">
+                            Заметки
+                        </label>
+                        <textarea 
+                            id="notes" 
+                            name="notes"
+                            class="form-textarea" 
+                            placeholder="Дополнительная информация о менторе"
+                            rows="4"
+                        ></textarea>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="history.back()">
+                        Отмена
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">
+                        Сохранить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Система управления менторами</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script type="module">
+        import { MentorCreateController } from '../controllers/mentor-create.controller.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const controller = new MentorCreateController();
+            controller.init();
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои записи - Личный кабинет ментора</title>
+    <link rel="stylesheet" href="/assets/styles/main.css">
+    <link rel="stylesheet" href="/assets/styles/ui-kit.css">
+</head>
+<body>
+    <!-- Auth Check -->
+    <script type="module">
+        import authService from '/modules/auth/infrastructure/auth.service.js';
+        
+        if (!authService.isAuthenticated()) {
+            window.location.href = '/login.html';
+        } else if (!authService.isMentor()) {
+            window.location.href = '/admin-panel/index.html';
+        } else {
+            const user = authService.getCurrentUser();
+            const logoutBtn = document.createElement('button');
+            logoutBtn.textContent = `🚪 Выход (${user.username})`;
+            logoutBtn.className = 'logout-btn';
+            logoutBtn.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #e53e3e; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; z-index: 1000;';
+            
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('Вы уверены что хотите выйти?')) {
+                    import('/modules/auth/application/use-cases/logout.use-case.js').then(module => {
+                        new module.default().execute();
+                    });
+                }
+            });
+            
+            document.body.appendChild(logoutBtn);
+        }
+    </script>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">🐟 KOI - Мои записи</h1>
+                <nav class="nav">
+                    <a href="/mentor-cabinet/index.html" class="nav-link">Главная</a>
+                    <a href="/mentor-cabinet/pages/my-works.html" class="nav-link active">Мои записи</a>
+                    <a href="/mentor-cabinet/pages/add-work.html" class="nav-link">Добавить работу</a>
+                    <a href="/mentor-cabinet/pages/my-profile.html" class="nav-link">Мой профиль</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+        <div class="container">
+            <div class="page-header">
+                <h1>Мои записи о работе</h1>
+                <button class="btn-primary" onclick="window.location.href='/mentor-cabinet/pages/add-work.html'">
+                    ➕ Добавить запись
+                </button>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters" style="margin-bottom: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
+                <select id="monthFilter" class="form-control" style="max-width: 200px;">
+                    <option value="">Все месяцы</option>
+                    <option value="0">Январь</option>
+                    <option value="1">Февраль</option>
+                    <option value="2">Март</option>
+                    <option value="3">Апрель</option>
+                    <option value="4">Май</option>
+                    <option value="5">Июнь</option>
+                    <option value="6">Июль</option>
+                    <option value="7">Август</option>
+                    <option value="8">Сентябрь</option>
+                    <option value="9">Октябрь</option>
+                    <option value="10">Ноябрь</option>
+                    <option value="11">Декабрь</option>
+                </select>
+                <select id="categoryFilter" class="form-control" style="max-width: 200px;">
+                    <option value="">Все категории</option>
+                    <option value="Обучение">Обучение</option>
+                    <option value="Консультация">Консультация</option>
+                    <option value="Разработка">Разработка</option>
+                    <option value="Тестирование">Тестирование</option>
+                    <option value="Документация">Документация</option>
+                    <option value="Другое">Другое</option>
+                </select>
+            </div>
+
+            <!-- Works List -->
+            <div id="worksList" class="works-list">
+                <div class="loading" style="text-align: center; padding: 60px; color: #718096;">
+                    Загрузка...
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 KOI - Личный кабинет ментора</p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import api from '/core/shared/api.js';
+        import authService from '/modules/auth/infrastructure/auth.service.js';
+        import formatters from '/core/shared/formatters.js';
+
+        const user = authService.getCurrentUser();
+        let allWorks = [];
+        let mentorData = null;
+
+        async function loadData() {
+            try {
+                mentorData = await api.get(`/mentors/${user.mentor_id}`);
+                const works = await api.get(`/work-records/?mentor_id=${user.mentor_id}`);
+                allWorks = works.sort((a, b) => new Date(b.workDate) - new Date(a.workDate));
+                renderWorks(allWorks);
+            } catch (error) {
+                console.error('Error loading works:', error);
+                document.getElementById('worksList').innerHTML = `
+                    <div style="text-align: center; padding: 60px;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">❌</div>
+                        <h3>Ошибка загрузки</h3>
+                        <p style="color: #718096;">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderWorks(works) {
+            const container = document.getElementById('worksList');
+            
+            if (works.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px; background: white; border-radius: 12px;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">📝</div>
+                        <h3>У вас пока нет записей</h3>
+                        <p style="color: #718096; margin-bottom: 24px;">Добавьте первую запись о выполненной работе</p>
+                        <button class="btn-primary" onclick="window.location.href='/mentor-cabinet/pages/add-work.html'">
+                            ➕ Добавить запись
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = works.map(work => {
+                const date = new Date(work.workDate).toLocaleDateString('ru-RU');
+                const hours = work.hours.toFixed(1);
+                const amount = (work.hours * mentorData.hourlyRate).toFixed(2);
+
+                return `
+                    <div class="work-card" style="background: white; padding: 24px; border-radius: 12px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 18px; color: #2d3748; margin-bottom: 8px;">
+                                    ${work.category}
+                                </div>
+                                <div style="color: #718096; font-size: 14px; display: flex; gap: 16px; flex-wrap: wrap;">
+                                    <span>📅 ${date}</span>
+                                    <span>⏱️ ${hours} ч</span>
+                                    <span>💰 ${formatters.money(amount)}</span>
+                                </div>
+                            </div>
+                            <button 
+                                onclick="deleteWork('${work.id}')" 
+                                style="padding: 8px 16px; background: #fee; color: #c53030; border: 1px solid #fc8181; border-radius: 6px; cursor: pointer; font-size: 14px;"
+                                title="Удалить запись"
+                            >
+                                🗑️ Удалить
+                            </button>
+                        </div>
+                        ${work.description ? `
+                            <div style="color: #4a5568; font-size: 14px; padding: 12px; background: #f7fafc; border-radius: 8px;">
+                                ${work.description}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterWorks() {
+            const monthFilter = document.getElementById('monthFilter').value;
+            const categoryFilter = document.getElementById('categoryFilter').value;
+
+            let filtered = allWorks;
+
+            if (monthFilter) {
+                filtered = filtered.filter(work => {
+                    const workMonth = new Date(work.workDate).getMonth();
+                    return workMonth === parseInt(monthFilter);
+                });
+            }
+
+            if (categoryFilter) {
+                filtered = filtered.filter(work => work.category === categoryFilter);
+            }
+
+            renderWorks(filtered);
+        }
+
+        window.deleteWork = async function(workId) {
+            if (!confirm('Вы уверены что хотите удалить эту запись?')) {
+                return;
+            }
+
+            try {
+                await api.delete(`/work-records/${workId}`);
+                alert('Запись успешно удалена');
+                await loadData();
+            } catch (error) {
+                alert('Ошибка удаления: ' + error.message);
+            }
+        };
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            document.getElementById('monthFilter').addEventListener('change', filterWorks);
+            document.getElementById('categoryFilter').addEventListener('change', filterWorks);
+        });
+    </script>
+</body>
+</html>
+

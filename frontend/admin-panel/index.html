@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель - Система управления менторами</title>
+    <link rel="stylesheet" href="/assets/styles/main.css">
+    <link rel="stylesheet" href="/assets/styles/ui-kit.css">
+</head>
+<body>
+    <!-- Auth Check -->
+    <script type="module">
+        import authService from '/modules/auth/infrastructure/auth.service.js';
+        
+        if (!authService.isAuthenticated()) {
+            window.location.href = '/login.html';
+        } else if (!authService.isManager()) {
+            // Ментор не должен видеть админ-панель
+            alert('Доступ запрещен. Эта страница только для руководителей.');
+            window.location.href = '/mentor-cabinet/index.html';
+        } else {
+            const user = authService.getCurrentUser();
+            const logoutBtn = document.createElement('button');
+            logoutBtn.textContent = `🚪 Выход (${user.username})`;
+            logoutBtn.className = 'logout-btn';
+            logoutBtn.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #e53e3e; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; z-index: 1000;';
+            
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('Вы уверены что хотите выйти?')) {
+                    import('/modules/auth/application/use-cases/logout.use-case.js').then(module => {
+                        new module.default().execute();
+                    });
+                }
+            });
+            
+            document.body.appendChild(logoutBtn);
+        }
+    </script>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">🐟 KOI - Админ-панель</h1>
+                <nav class="nav">
+                    <a href="/admin-panel/index.html" class="nav-link active">Дашборд</a>
+                    <a href="/admin-panel/pages/mentors/list.html" class="nav-link">Менторы</a>
+                    <a href="/admin-panel/pages/works/list.html" class="nav-link">Записи работ</a>
+                    <a href="/admin-panel/pages/reports/list.html" class="nav-link">Отчеты</a>
+                    <a href="/admin-panel/pages/settings/index.html" class="nav-link">Настройки</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Statistics Cards -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Всего менторов</div>
+                        <div class="stat-value" id="totalMentors">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Активных менторов</div>
+                        <div class="stat-value" id="activeMentors">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Часов в этом месяце</div>
+                        <div class="stat-value" id="monthHours">0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-content">
+                        <div class="stat-label">Сумма за месяц</div>
+                        <div class="stat-value" id="monthAmount">0 руб.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="actions">
+                <button class="btn btn-primary" id="addMentorBtn">
+                    <span>+</span> Добавить ментора
+                </button>
+                <button class="btn btn-secondary" id="addWorkBtn">
+                    Добавить работу
+                </button>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Поиск по менторам..." class="search-input">
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters">
+                <button class="filter-btn active" data-filter="all">Все</button>
+                <button class="filter-btn" data-filter="active">Активные</button>
+                <button class="filter-btn" data-filter="inactive">Неактивные</button>
+            </div>
+
+            <!-- Mentors Table -->
+            <div class="table-container">
+                <table class="table" id="mentorsTable">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>ФИО</th>
+                            <th>Специализация</th>
+                            <th>Ставка</th>
+                            <th>Часов в месяце</th>
+                            <th>К выплате</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mentorsTableBody">
+                        <tr>
+                            <td colspan="8" class="empty-state">
+                                <div class="empty-state-content">
+                                    <div class="empty-state-icon">📋</div>
+                                    <h3>Нет менторов</h3>
+                                    <p>Добавьте первого ментора для начала работы</p>
+                                    <button class="btn btn-primary" id="addFirstMentorBtn">
+                                        Добавить ментора
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mentors List -->
+            <div class="section-header">
+                <h2>Недавние менторы</h2>
+                <a href="/admin-panel/pages/mentors/list.html" class="link">Показать всех →</a>
+            </div>
+            <div id="mentorsList" class="mentors-grid">
+                <!-- Будет заполнено динамически -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 KOI - Система управления менторами. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script type="module">
+        import app from '/core/app.js';
+        import eventBus from '/core/events/event-bus.js';
+        import { DashboardController } from '/modules/statistics/presentation/controllers/dashboard.controller.js';
+
+        // Инициализация приложения
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Инициализируем приложение
+                await app.init();
+
+                // Инициализируем контроллер дашборда
+                const dashboardController = new DashboardController();
+                dashboardController.init();
+
+                console.log('[Admin Panel] App initialized successfully');
+            } catch (error) {
+                console.error('[Admin Panel] Error initializing app:', error);
+                alert('Ошибка инициализации приложения');
+            }
+        });
+    </script>
+</body>
+</html>
+

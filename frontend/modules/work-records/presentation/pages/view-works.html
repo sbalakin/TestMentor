@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Все записи о работе - Система управления менторами</title>
+    <link rel="stylesheet" href="../../../../assets/styles/main.css">
+</head>
+<body>
+    <!-- Auth Check -->
+    <script type="module">
+        import authService from '/modules/auth/infrastructure/auth.service.js';
+        
+        // Проверка авторизации
+        if (!authService.isAuthenticated()) {
+            window.location.href = '/modules/auth/presentation/pages/login.html';
+        } else {
+            // Добавить кнопку выхода
+            const user = authService.getCurrentUser();
+            const logoutBtn = document.createElement('button');
+            logoutBtn.textContent = `🚪 Выход (${user.username})`;
+            logoutBtn.className = 'logout-btn';
+            logoutBtn.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #e53e3e; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; z-index: 1000; transition: all 0.2s;';
+            
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('Вы уверены что хотите выйти?')) {
+                    import('/modules/auth/application/use-cases/logout.use-case.js').then(module => {
+                        new module.default().execute();
+                    });
+                }
+            });
+            
+            document.body.appendChild(logoutBtn);
+            
+            // Обновить навигацию в зависимости от роли
+            window.addEventListener('DOMContentLoaded', () => {
+                const homeLink = document.querySelector('a[href*="index.html"]');
+                if (homeLink && user.role === 'MENTOR') {
+                    // Для ментора скрыть ссылку на главную
+                    homeLink.style.display = 'none';
+                }
+            });
+        }
+    </script>
+    
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">Система управления менторами</h1>
+                <nav class="nav">
+                    <a href="../../../../index.html" class="nav-link">Главная</a>
+                    <a href="../../../mentors/presentation/pages/mentors-list.html" class="nav-link">Менторы</a>
+                    <a href="./add-work.html" class="nav-link">Добавить работу</a>
+                    <a href="./view-works.html" class="nav-link active">Все записи</a>
+                    <a href="../../../reports/presentation/pages/reports-archive.html" class="nav-link">Архив актов</a>
+                    <a href="../../../settings/presentation/pages/settings.html" class="nav-link">Настройки</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+        <div class="container">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1>Все записи о работе</h1>
+                <button class="btn btn-primary" id="addWorkBtn">
+                    + Добавить запись
+                </button>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters-panel">
+                <div class="filters-row">
+                    <select id="mentorFilter" class="form-select">
+                        <option value="">Все менторы</option>
+                    </select>
+
+                    <select id="monthFilter" class="form-select">
+                        <option value="">Все месяцы</option>
+                    </select>
+
+                    <select id="categoryFilter" class="form-select">
+                        <option value="">Все категории</option>
+                        <option value="mentoring">Обучение/Менторство</option>
+                        <option value="development">Разработка</option>
+                        <option value="consulting">Консультации</option>
+                        <option value="other">Другое</option>
+                    </select>
+
+                    <button class="btn btn-secondary" id="resetFiltersBtn">
+                        Сбросить фильтры
+                    </button>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="summary-cards">
+                <div class="summary-card">
+                    <div class="summary-label">Всего записей</div>
+                    <div class="summary-value" id="totalRecords">0</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Всего часов</div>
+                    <div class="summary-value" id="totalHours">0 ч</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">Общая сумма</div>
+                    <div class="summary-value" id="totalAmount">0 руб.</div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Дата</th>
+                            <th>Ментор</th>
+                            <th>Категория</th>
+                            <th>Описание</th>
+                            <th>Часы</th>
+                            <th>Сумма</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="worksTableBody">
+                        <tr>
+                            <td colspan="8" class="empty-state">
+                                <div class="empty-state-content">
+                                    <div class="empty-state-icon">📝</div>
+                                    <h3>Нет записей</h3>
+                                    <p>Добавьте первую запись о работе</p>
+                                    <button class="btn btn-primary" id="addFirstWorkBtn">
+                                        Добавить запись
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Система управления менторами</p>
+        </div>
+    </footer>
+
+    <style>
+        .filters-panel {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .filters-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .summary-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            text-align: center;
+        }
+
+        .summary-label {
+            font-size: var(--font-size-sm);
+            color: var(--color-text-secondary);
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .summary-value {
+            font-size: var(--font-size-2xl);
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+    </style>
+
+    <!-- Scripts -->
+    <script type="module">
+        import { ViewWorksController } from '../controllers/view-works.controller.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const controller = new ViewWorksController();
+            controller.init();
+        });
+    </script>
+</body>
+</html>
+

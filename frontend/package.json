@@ -1,0 +1,27 @@
+{
+  "name": "koi-frontend",
+  "version": "1.0.0",
+  "description": "KOI - Система управления менторами (Frontend)",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:admin": "playwright test tests/e2e/admin-panel",
+    "test:mentor": "playwright test tests/e2e/mentor-cabinet",
+    "test:report": "playwright show-report",
+    "test:install": "playwright install"
+  },
+  "keywords": [
+    "mentors",
+    "management",
+    "system"
+  ],
+  "author": "KOI Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
+}
+

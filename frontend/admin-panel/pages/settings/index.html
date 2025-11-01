@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Настройки - Система управления менторами</title>
+    <link rel="stylesheet" href="../../../../assets/styles/main.css">
+</head>
+<body>
+    <!-- Auth Check -->
+    <script type="module">
+        import authService from '/modules/auth/infrastructure/auth.service.js';
+        
+        // Проверка авторизации
+        if (!authService.isAuthenticated()) {
+            window.location.href = '/modules/auth/presentation/pages/login.html';
+        } else {
+            const user = authService.getCurrentUser();
+            const logoutBtn = document.createElement('button');
+            logoutBtn.textContent = `🚪 Выход (${user.username})`;
+            logoutBtn.className = 'logout-btn';
+            logoutBtn.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #e53e3e; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; z-index: 1000;';
+            
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('Вы уверены что хотите выйти?')) {
+                    import('/modules/auth/application/use-cases/logout.use-case.js').then(module => {
+                        new module.default().execute();
+                    });
+                }
+            });
+            
+            document.body.appendChild(logoutBtn);
+
+            // Для ментора скрыть опасные операции и навигацию
+            window.addEventListener('DOMContentLoaded', () => {
+                if (user.role === 'MENTOR') {
+                    // Скрыть кнопку очистки данных для менторов
+                    const clearBtn = document.getElementById('clearDataBtn');
+                    if (clearBtn) clearBtn.style.display = 'none';
+                    
+                    // Скрыть ссылку на главную
+                    const homeLink = document.getElementById('homeLink');
+                    if (homeLink) homeLink.style.display = 'none';
+                }
+            });
+        }
+    </script>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">🐟 KOI - Настройки</h1>
+                <nav class="nav">
+                    <a href="/admin-panel/index.html" class="nav-link">Дашборд</a>
+                    <a href="/admin-panel/pages/mentors/list.html" class="nav-link">Менторы</a>
+                    <a href="/admin-panel/pages/works/list.html" class="nav-link">Записи работ</a>
+                    <a href="/admin-panel/pages/reports/list.html" class="nav-link">Отчеты</a>
+                    <a href="/admin-panel/pages/settings/index.html" class="nav-link active">Настройки</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+        <div class="container">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1>Настройки системы</h1>
+            </div>
+
+            <!-- Settings Sections -->
+            <div class="settings-grid">
+                <!-- Data Management -->
+                <div class="settings-card">
+                    <div class="settings-card-icon">💾</div>
+                    <h2>Управление данными</h2>
+                    <p>Экспорт, импорт и очистка данных</p>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" id="exportDataBtn">
+                            Экспортировать данные
+                        </button>
+                        <button class="btn btn-secondary" id="importDataBtn">
+                            Импортировать данные
+                        </button>
+                        <button class="btn btn-danger" id="clearDataBtn">
+                            Очистить все данные
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Storage Info -->
+                <div class="settings-card">
+                    <div class="settings-card-icon">📊</div>
+                    <h2>Хранилище</h2>
+                    <p>Информация об использовании LocalStorage</p>
+                    <div class="storage-info">
+                        <div class="storage-row">
+                            <span>Использовано:</span>
+                            <span id="storageSize">-</span>
+                        </div>
+                        <div class="storage-row">
+                            <span>Процент заполнения:</span>
+                            <span id="storagePercent">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- About -->
+                <div class="settings-card">
+                    <div class="settings-card-icon">ℹ️</div>
+                    <h2>О системе</h2>
+                    <p>Информация о версии и разработке</p>
+                    <div class="about-info">
+                        <div class="about-row">
+                            <span>Версия:</span>
+                            <span>1.0.0</span>
+                        </div>
+                        <div class="about-row">
+                            <span>Дата релиза:</span>
+                            <span>31.10.2025</span>
+                        </div>
+                        <div class="about-row">
+                            <span>Архитектура:</span>
+                            <span>Модульный монолит + Clean Architecture</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Future Features -->
+                <div class="settings-card">
+                    <div class="settings-card-icon">🚀</div>
+                    <h2>Планируется</h2>
+                    <p>Функции в разработке</p>
+                    <ul class="future-features">
+                        <li>Настройка валюты</li>
+                        <li>Настройка формата дат</li>
+                        <li>Настройка email уведомлений</li>
+                        <li>Резервное копирование</li>
+                        <li>Темная тема</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Система управления менторами</p>
+        </div>
+    </footer>
+
+    <style>
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-xl);
+        }
+
+        .settings-card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .settings-card-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .settings-card h2 {
+            font-size: var(--font-size-xl);
+            margin-bottom: var(--spacing-sm);
+            color: var(--color-text-primary);
+        }
+
+        .settings-card p {
+            color: var(--color-text-secondary);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .settings-actions {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .storage-info, .about-info {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+
+        .storage-row, .about-row {
+            display: flex;
+            justify-content: space-between;
+            padding: var(--spacing-sm);
+            background: var(--color-bg);
+            border-radius: var(--radius-sm);
+        }
+
+        .storage-row span:first-child,
+        .about-row span:first-child {
+            color: var(--color-text-secondary);
+        }
+
+        .storage-row span:last-child,
+        .about-row span:last-child {
+            color: var(--color-text-primary);
+            font-weight: 500;
+        }
+
+        .future-features {
+            list-style-position: inside;
+            color: var(--color-text-secondary);
+        }
+
+        .future-features li {
+            padding: var(--spacing-xs) 0;
+        }
+    </style>
+
+    <script type="module">
+        import storage from '../../../../core/shared/storage.js';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Отобразить информацию о хранилище
+            updateStorageInfo();
+
+            // Экспорт данных
+            document.getElementById('exportDataBtn').addEventListener('click', exportData);
+
+            // Импорт данных
+            document.getElementById('importDataBtn').addEventListener('click', importData);
+
+            // Очистка данных
+            document.getElementById('clearDataBtn').addEventListener('click', clearData);
+        });
+
+        function updateStorageInfo() {
+            const size = storage.getSize();
+            const percent = storage.getUsagePercent();
+
+            const sizeKB = (size / 1024).toFixed(2);
+            document.getElementById('storageSize').textContent = `${sizeKB} KB`;
+            document.getElementById('storagePercent').textContent = `${percent}%`;
+        }
+
+        function exportData() {
+            try {
+                const data = storage.exportAll();
+                const json = JSON.stringify(data, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `mentor-system-backup-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                
+                URL.revokeObjectURL(url);
+                alert('Данные успешно экспортированы');
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Ошибка при экспорте данных');
+            }
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        
+                        if (confirm('Это заменит все текущие данные. Продолжить?')) {
+                            const success = storage.importAll(data);
+                            if (success) {
+                                alert('Данные успешно импортированы');
+                                location.reload();
+                            } else {
+                                alert('Ошибка при импорте данных');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Import error:', error);
+                        alert('Ошибка при чтении файла');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+
+        function clearData() {
+            if (confirm('Вы уверены? Все данные будут безвозвратно удалены!')) {
+                if (confirm('Это действие нельзя отменить. Продолжить?')) {
+                    storage.clear();
+                    alert('Все данные успешно удалены');
+                    location.reload();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавить запись - Личный кабинет ментора</title>
+    <link rel="stylesheet" href="/assets/styles/main.css">
+    <link rel="stylesheet" href="/assets/styles/ui-kit.css">
+</head>
+<body>
+    <!-- Auth Check -->
+    <script type="module">
+        import authService from '/modules/auth/infrastructure/auth.service.js';
+        
+        if (!authService.isAuthenticated()) {
+            window.location.href = '/login.html';
+        } else if (!authService.isMentor()) {
+            window.location.href = '/admin-panel/index.html';
+        } else {
+            const user = authService.getCurrentUser();
+            const logoutBtn = document.createElement('button');
+            logoutBtn.textContent = `🚪 Выход (${user.username})`;
+            logoutBtn.className = 'logout-btn';
+            logoutBtn.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #e53e3e; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; z-index: 1000;';
+            
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('Вы уверены что хотите выйти?')) {
+                    import('/modules/auth/application/use-cases/logout.use-case.js').then(module => {
+                        new module.default().execute();
+                    });
+                }
+            });
+            
+            document.body.appendChild(logoutBtn);
+        }
+    </script>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">🐟 KOI - Добавить работу</h1>
+                <nav class="nav">
+                    <a href="/mentor-cabinet/index.html" class="nav-link">Главная</a>
+                    <a href="/mentor-cabinet/pages/my-works.html" class="nav-link">Мои записи</a>
+                    <a href="/mentor-cabinet/pages/add-work.html" class="nav-link active">Добавить работу</a>
+                    <a href="/mentor-cabinet/pages/my-profile.html" class="nav-link">Мой профиль</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+        <div class="container" style="max-width: 800px;">
+            <div class="page-header">
+                <h1>Добавить запись о работе</h1>
+                <button class="btn-secondary" onclick="history.back()">← Назад</button>
+            </div>
+
+            <form id="addWorkForm" style="background: white; padding: 32px; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <!-- Дата -->
+                <div class="form-group">
+                    <label class="form-label" for="workDate">Дата работы *</label>
+                    <input 
+                        type="date" 
+                        id="workDate" 
+                        class="form-control" 
+                        required
+                        max=""
+                    >
+                </div>
+
+                <!-- Категория -->
+                <div class="form-group">
+                    <label class="form-label" for="category">Категория работы *</label>
+                    <select id="category" class="form-control" required>
+                        <option value="">Выберите категорию</option>
+                        <option value="Обучение">Обучение</option>
+                        <option value="Консультация">Консультация</option>
+                        <option value="Разработка">Разработка</option>
+                        <option value="Тестирование">Тестирование</option>
+                        <option value="Документация">Документация</option>
+                        <option value="Другое">Другое</option>
+                    </select>
+                </div>
+
+                <!-- Часы -->
+                <div class="form-group">
+                    <label class="form-label" for="hours">Количество часов *</label>
+                    <input 
+                        type="number" 
+                        id="hours" 
+                        class="form-control" 
+                        required
+                        min="0.5"
+                        max="24"
+                        step="0.5"
+                        placeholder="Например: 2.5"
+                    >
+                    <small style="color: #718096; font-size: 14px; margin-top: 4px; display: block;">
+                        От 0.5 до 24 часов
+                    </small>
+                </div>
+
+                <!-- Описание -->
+                <div class="form-group">
+                    <label class="form-label" for="description">Описание работы</label>
+                    <textarea 
+                        id="description" 
+                        class="form-control" 
+                        rows="5"
+                        placeholder="Опишите выполненную работу..."
+                    ></textarea>
+                </div>
+
+                <!-- Расчет суммы -->
+                <div style="background: #f7fafc; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <div style="color: #718096; font-size: 14px; margin-bottom: 4px;">Сумма к выплате:</div>
+                            <div style="font-size: 28px; font-weight: bold; color: #667eea;" id="calculatedAmount">
+                                0 ₽
+                            </div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="color: #718096; font-size: 14px;">Ваша ставка:</div>
+                            <div style="font-size: 18px; font-weight: 600; color: #2d3748;" id="hourlyRate">
+                                0 ₽/час
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Кнопки -->
+                <div style="display: flex; gap: 12px;">
+                    <button type="submit" class="btn-primary" style="flex: 1;" id="submitBtn">
+                        ✓ Добавить запись
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="history.back()">
+                        Отмена
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 KOI - Личный кабинет ментора</p>
+        </div>
+    </footer>
+
+    <script type="module">
+        import api from '/core/shared/api.js';
+        import authService from '/modules/auth/infrastructure/auth.service.js';
+        import formatters from '/core/shared/formatters.js';
+
+        const user = authService.getCurrentUser();
+        let mentorData = null;
+
+        // Установить максимальную дату (сегодня)
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('workDate').max = today;
+        document.getElementById('workDate').value = today;
+
+        // Загрузить данные ментора
+        async function loadMentorData() {
+            try {
+                mentorData = await api.get(`/mentors/${user.mentor_id}`);
+                document.getElementById('hourlyRate').textContent = formatters.money(mentorData.hourlyRate);
+                calculateAmount();
+            } catch (error) {
+                console.error('Error loading mentor data:', error);
+                alert('Ошибка загрузки данных: ' + error.message);
+            }
+        }
+
+        // Расчет суммы
+        function calculateAmount() {
+            const hours = parseFloat(document.getElementById('hours').value) || 0;
+            if (mentorData) {
+                const amount = hours * mentorData.hourlyRate;
+                document.getElementById('calculatedAmount').textContent = formatters.money(amount);
+            }
+        }
+
+        // Обработка формы
+        document.getElementById('addWorkForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const workData = {
+                mentor_id: user.mentor_id,
+                work_date: document.getElementById('workDate').value,
+                category: document.getElementById('category').value,
+                hours: parseFloat(document.getElementById('hours').value),
+                description: document.getElementById('description').value.trim() || null
+            };
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Добавление...';
+
+            try {
+                await api.post('/work-records/', workData);
+                alert('✓ Запись успешно добавлена!');
+                window.location.href = '/mentor-cabinet/pages/my-works.html';
+            } catch (error) {
+                console.error('Error adding work:', error);
+                alert('Ошибка добавления записи: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✓ Добавить запись';
+            }
+        });
+
+        // Обновлять сумму при изменении часов
+        document.getElementById('hours').addEventListener('input', calculateAmount);
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', loadMentorData);
+    </script>
+</body>
+</html>
+

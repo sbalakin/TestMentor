@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль ментора</title>
+    <link rel="stylesheet" href="/assets/styles/main.css">
+    <link rel="stylesheet" href="/assets/styles/ui-kit.css">
+</head>
+<body>
+    <!-- Auth Check -->
+    <script type="module">
+        import authService from '/modules/auth/infrastructure/auth.service.js';
+        
+        if (!authService.isAuthenticated()) {
+            window.location.href = '/modules/auth/presentation/pages/login.html';
+        } else {
+            const user = authService.getCurrentUser();
+            const logoutBtn = document.createElement('button');
+            logoutBtn.textContent = `🚪 Выход (${user.username})`;
+            logoutBtn.className = 'logout-btn';
+            logoutBtn.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #e53e3e; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; z-index: 1000;';
+            
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('Вы уверены что хотите выйти?')) {
+                    import('/modules/auth/application/use-cases/logout.use-case.js').then(module => {
+                        new module.default().execute();
+                    });
+                }
+            });
+            
+            document.body.appendChild(logoutBtn);
+        }
+    </script>
+
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">🐟 KOI - Профиль ментора</h1>
+                <nav class="nav">
+                    <a href="/admin-panel/index.html" class="nav-link">Дашборд</a>
+                    <a href="/admin-panel/pages/mentors/list.html" class="nav-link active">Менторы</a>
+                    <a href="/admin-panel/pages/works/list.html" class="nav-link">Записи работ</a>
+                    <a href="/admin-panel/pages/reports/list.html" class="nav-link">Отчеты</a>
+                    <a href="/admin-panel/pages/settings/index.html" class="nav-link">Настройки</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="main">
+        <div class="container">
+            <button class="btn-secondary" onclick="history.back()" style="margin-bottom: 20px;">← Назад</button>
+
+            <div id="mentorProfile" class="profile-container">
+                <div class="loading" style="text-align: center; padding: 60px;">Загрузка...</div>
+            </div>
+        </div>
+    </main>
+
+    <style>
+        .profile-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .profile-header {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .profile-info h1 {
+            margin: 0 0 8px 0;
+            font-size: 32px;
+            color: #2d3748;
+        }
+
+        .profile-specialization {
+            font-size: 18px;
+            color: #718096;
+            margin-bottom: 16px;
+        }
+
+        .profile-status {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .profile-status.active {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .profile-status.inactive {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .profile-details {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+        }
+
+        .profile-details h2 {
+            margin: 0 0 24px 0;
+            font-size: 20px;
+            color: #2d3748;
+        }
+
+        .detail-row {
+            display: flex;
+            padding: 16px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            width: 200px;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        .detail-value {
+            flex: 1;
+            color: #2d3748;
+        }
+
+        .profile-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 14px;
+        }
+    </style>
+
+    <script type="module">
+        import api from '/core/shared/api.js';
+        import authService from '/modules/auth/infrastructure/auth.service.js';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const mentorId = urlParams.get('id');
+
+        if (!mentorId) {
+            window.location.href = '/admin-panel/pages/mentors/list.html';
+        }
+
+        async function loadMentorProfile() {
+            try {
+                // Проверка прав доступа для ментора
+                const currentUser = authService.getCurrentUser();
+                if (currentUser.role === 'MENTOR' && currentUser.mentor_id !== mentorId) {
+                    // Ментор пытается посмотреть чужой профиль
+                    document.getElementById('mentorProfile').innerHTML = `
+                        <div class="empty-state" style="text-align: center; padding: 60px;">
+                            <div style="font-size: 64px; margin-bottom: 16px;">🔒</div>
+                            <h3>Доступ запрещен</h3>
+                            <p>Вы можете просматривать только свой профиль</p>
+                            <button class="btn-primary" onclick="window.location.href='/modules/mentors/presentation/pages/view-mentor.html?id=${currentUser.mentor_id}'">Мой профиль</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const mentor = await api.get(`/mentors/${mentorId}`);
+                const works = await api.get(`/work-records/?mentor_id=${mentorId}`);
+                
+                renderProfile(mentor, works);
+            } catch (error) {
+                console.error('Error loading mentor:', error);
+                if (error.message.includes('403') || error.message.includes('Доступ запрещен')) {
+                    document.getElementById('mentorProfile').innerHTML = `
+                        <div class="empty-state" style="text-align: center; padding: 60px;">
+                            <div style="font-size: 64px; margin-bottom: 16px;">🔒</div>
+                            <h3>Доступ запрещен</h3>
+                            <p>У вас нет прав для просмотра этого профиля</p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('mentorProfile').innerHTML = `
+                        <div class="empty-state" style="text-align: center; padding: 60px;">
+                            <div style="font-size: 64px; margin-bottom: 16px;">❌</div>
+                            <h3>Ошибка загрузки</h3>
+                            <p>${error.message}</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function renderProfile(mentor, works) {
+            const initials = mentor.fullName.split(' ').map(n => n[0]).join('').substring(0, 2);
+            const statusClass = mentor.status === 'ACTIVE' ? 'active' : 'inactive';
+            const statusText = mentor.status === 'ACTIVE' ? 'Активен' : 'Неактивен';
+            
+            const totalHours = works.reduce((sum, work) => sum + work.hours, 0);
+            const totalAmount = totalHours * mentor.hourlyRate;
+
+            let actionsHTML = '';
+            if (authService.isManager()) {
+                actionsHTML = `
+                    <div class="profile-actions">
+                        <button class="btn-primary" onclick="alert('Редактирование в разработке')">Редактировать</button>
+                        <button class="btn-danger" onclick="deleteMentor('${mentor.id}')">Удалить</button>
+                    </div>
+                `;
+            }
+
+            document.getElementById('mentorProfile').innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${works.length}</div>
+                        <div class="stat-label">Всего записей</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${totalHours.toFixed(1)}</div>
+                        <div class="stat-label">Часов работы</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${totalAmount.toLocaleString()} ₽</div>
+                        <div class="stat-label">Общая сумма</div>
+                    </div>
+                </div>
+
+                <div class="profile-header">
+                    <div class="profile-avatar">${initials}</div>
+                    <div class="profile-info">
+                        <h1>${mentor.fullName}</h1>
+                        <div class="profile-specialization">${mentor.specialization}</div>
+                        <span class="profile-status ${statusClass}">${statusText}</span>
+                    </div>
+                </div>
+
+                <div class="profile-details">
+                    <h2>Контактная информация</h2>
+                    <div class="detail-row">
+                        <div class="detail-label">Email:</div>
+                        <div class="detail-value"><a href="mailto:${mentor.email}">${mentor.email}</a></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Телефон:</div>
+                        <div class="detail-value">${mentor.phone || 'Не указан'}</div>
+                    </div>
+                </div>
+
+                <div class="profile-details">
+                    <h2>Рабочая информация</h2>
+                    <div class="detail-row">
+                        <div class="detail-label">Ставка:</div>
+                        <div class="detail-value">${mentor.hourlyRate} ₽/час</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Дата начала работы:</div>
+                        <div class="detail-value">${new Date(mentor.startDate).toLocaleDateString('ru-RU')}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Паспорт/ИНН:</div>
+                        <div class="detail-value">${mentor.passportOrInn || 'Не указано'}</div>
+                    </div>
+                    ${mentor.notes ? `
+                    <div class="detail-row">
+                        <div class="detail-label">Примечания:</div>
+                        <div class="detail-value">${mentor.notes}</div>
+                    </div>
+                    ` : ''}
+                </div>
+
+                ${actionsHTML}
+            `;
+        }
+
+        window.deleteMentor = async function(id) {
+            if (!confirm('Вы уверены что хотите удалить этого ментора? Это действие необратимо!')) {
+                return;
+            }
+
+            try {
+                await api.delete(`/mentors/${id}`);
+                alert('Ментор успешно удален');
+                window.location.href = '/admin-panel/pages/mentors/list.html';
+            } catch (error) {
+                alert('Ошибка удаления: ' + error.message);
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', loadMentorProfile);
+    </script>
+</body>
+</html>
+

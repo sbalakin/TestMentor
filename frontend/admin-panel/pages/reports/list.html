@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Архив актов - Система управления менторами</title>
+    <link rel="stylesheet" href="../../../../assets/styles/main.css">
+</head>
+<body>
+    <!-- Auth Check -->
+    <script type="module">
+        import authService from '/modules/auth/infrastructure/auth.service.js';
+        
+        // Проверка авторизации
+        if (!authService.isAuthenticated()) {
+            window.location.href = '/modules/auth/presentation/pages/login.html';
+        } else {
+            const user = authService.getCurrentUser();
+            const logoutBtn = document.createElement('button');
+            logoutBtn.textContent = `🚪 Выход (${user.username})`;
+            logoutBtn.className = 'logout-btn';
+            logoutBtn.style.cssText = 'position: fixed; top: 20px; right: 20px; padding: 10px 20px; background: #e53e3e; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; z-index: 1000;';
+            
+            logoutBtn.addEventListener('click', () => {
+                if (confirm('Вы уверены что хотите выйти?')) {
+                    import('/modules/auth/application/use-cases/logout.use-case.js').then(module => {
+                        new module.default().execute();
+                    });
+                }
+            });
+            
+            document.body.appendChild(logoutBtn);
+            
+            // Для ментора скрыть навигацию на главную
+            window.addEventListener('DOMContentLoaded', () => {
+                if (user.role === 'MENTOR') {
+                    const homeLink = document.getElementById('homeLink');
+                    if (homeLink) homeLink.style.display = 'none';
+                }
+            });
+        }
+    </script>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">🐟 KOI - Отчеты</h1>
+                <nav class="nav">
+                    <a href="/admin-panel/index.html" class="nav-link">Дашборд</a>
+                    <a href="/admin-panel/pages/mentors/list.html" class="nav-link">Менторы</a>
+                    <a href="/admin-panel/pages/works/list.html" class="nav-link">Записи работ</a>
+                    <a href="/admin-panel/pages/reports/list.html" class="nav-link active">Отчеты</a>
+                    <a href="/admin-panel/pages/settings/index.html" class="nav-link">Настройки</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+        <div class="container">
+            <!-- Page Header -->
+            <div class="page-header">
+                <h1>Архив актов выполненных работ</h1>
+                <button class="btn btn-primary" id="generateReportBtn">
+                    + Сформировать новый акт
+                </button>
+            </div>
+
+            <!-- Coming Soon Message -->
+            <div class="coming-soon">
+                <div class="coming-soon-icon">🚧</div>
+                <h2>Раздел в разработке</h2>
+                <p>Здесь будет архив всех сформированных актов выполненных работ в формате PDF</p>
+                <div class="coming-soon-features">
+                    <h3>Планируемый функционал:</h3>
+                    <ul>
+                        <li>Генерация актов в PDF формате</li>
+                        <li>Выбор ментора и периода</li>
+                        <li>Просмотр сформированных актов</li>
+                        <li>Скачивание актов</li>
+                        <li>Отправка актов на email</li>
+                    </ul>
+                </div>
+                <button class="btn btn-secondary" onclick="window.location.href='../../../../index.html'">
+                    Вернуться на главную
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Система управления менторами</p>
+        </div>
+    </footer>
+
+    <style>
+        .coming-soon {
+            text-align: center;
+            padding: var(--spacing-2xl);
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .coming-soon-icon {
+            font-size: 64px;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .coming-soon h2 {
+            font-size: var(--font-size-2xl);
+            margin-bottom: var(--spacing-md);
+            color: var(--color-text-primary);
+        }
+
+        .coming-soon p {
+            color: var(--color-text-secondary);
+            margin-bottom: var(--spacing-xl);
+            line-height: 1.6;
+        }
+
+        .coming-soon-features {
+            background: var(--color-bg);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+            text-align: left;
+        }
+
+        .coming-soon-features h3 {
+            font-size: var(--font-size-lg);
+            margin-bottom: var(--spacing-md);
+            color: var(--color-text-primary);
+        }
+
+        .coming-soon-features ul {
+            list-style-position: inside;
+            color: var(--color-text-secondary);
+        }
+
+        .coming-soon-features li {
+            padding: var(--spacing-xs) 0;
+        }
+    </style>
+
+    <script>
+        document.getElementById('generateReportBtn').addEventListener('click', () => {
+            alert('Функция генерации актов будет реализована в следующей версии');
+        });
+    </script>
+</body>
+</html>
+
